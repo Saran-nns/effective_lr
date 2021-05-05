@@ -62,8 +62,7 @@ class AdamELR(Optimizer):
                 v_debiased = v.div(1 - beta2 ** state['step'])
 
                 # Update learning rate
-                state['elr'] = state['lr'] * m_debiased/(torch.sqrt(v_debiased) + group['eps'])
-                dp = -grad * state['elr']
-                p.data.add_(dp)
+                state['elr'] = -state['lr'] * m_debiased/ (torch.sqrt(v_debiased) + group['eps'])
+                p.data.add_(state['elr'])
 
         return loss
