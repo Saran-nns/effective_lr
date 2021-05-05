@@ -1,3 +1,6 @@
+import torch
+from torch.optim.optimizer import Optimizer, required
+
 class AdamELR(Optimizer):
 
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8,
@@ -44,6 +47,8 @@ class AdamELR(Optimizer):
                     state['lr'] = torch.zeros_like(p.data).fill_(group['lr'])
                     # Effective learning rate
                     state['elr'] = torch.zeros_like(p.data)
+                    # Delta parameter
+                    state['dp'] = torch.zeros_like(p.data)
                     # Exponential moving average of gradient values along parameter group p
                     state['m'] = torch.zeros_like(p.data)
                     # Exponential moving average of squared gradient values along parameter group p
@@ -62,7 +67,8 @@ class AdamELR(Optimizer):
                 v_debiased = v.div(1 - beta2 ** state['step'])
 
                 # Update learning rate
-                state['elr'] = -state['lr'] * m_debiased/ (torch.sqrt(v_debiased) + group['eps'])
-                p.data.add_(state['elr'])
+                state['dp'] = -state['lr'] * m_debiased/(torch.sqrt(v_debiased) + group['eps'])
+                state['elr'] = -state['dp']/(grad + group['eps'])
+                p.data.add_(state['dp'])
 
         return loss
